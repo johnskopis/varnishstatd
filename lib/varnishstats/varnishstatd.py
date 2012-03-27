@@ -25,7 +25,7 @@ class StatsWrapper(object):
 
     def update(self):
         si = VarnishStats()
-        p = subprocess.Popen(["/usr/bin/varnishstat", "-1"], bufsize=4096, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        p = subprocess.Popen(["/usr/bin/varnishstat", "-1", "-n", "couponcabin"], bufsize=4096, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         p.stdin.close()
         out = p.stdout.readlines()
         pairs = [ i.rstrip('\n').split(None,3) for i in out ]
@@ -46,7 +46,7 @@ class StatsWrapper(object):
                 
                 if c <= 5:
                     si.__dict__["%s_5min" % k] = int(round( (i.__dict__["%s_5min" % k] + si.__dict__["%s" % k]) / 2 ))
-                    si.__dict__["%s_delta_5min" % k] = int(round( (i.__dict__["%s_delta_5min" % k] + si.__dict__["%s" % k]) / 2 ))
+                    si.__dict__["%s_delta_5min" % k] = int(round( (i.__dict__["%s_delta_5min" % k] + si.__dict__["%s_delta" % k]) / 2 ))
 
                 si.__dict__["%s_15min" % k] = int(round( (i.__dict__["%s_15min" % k] + si.__dict__["%s" % k]) /2 ))
                 si.__dict__["%s_delta_15min" % k] = int(round( (i.__dict__["%s_delta_15min" % k] + si.__dict__["%s_delta" % k]) /2 ))
