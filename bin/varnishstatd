@@ -1,0 +1,112 @@
+#!/usr/bin/env python26
+
+import site
+site.addsitedir("/home/dev/src/varnishstats-daemon/lib")
+
+import daemon, daemon.pidfile
+from varnishstats import varnishstatd
+import optparse
+import sys, os, pwd, grp
+
+
+def read_pidfile(pidfile):
+    pid=-1
+    try:
+        f=open(pidfile,"r")
+        pid = f.readline().rstrip('\n')
+        pid = int(pid)
+        f.close()
+    except:
+        pass
+
+    return pid
+
+
+def running(pid):
+    running=False
+    try:
+        f=open('/proc/%d/cmdline' % pid )
+        if f.readline().startswith('python'):
+            running=True
+        f.close()
+    except:
+        pass
+    return running
+
+
+
+
+if __name__ == "__main__":
+    parser = optparse.OptionParser(
+        usage = "%prog [options] <start|stop|restart>",
+        description = "varnishstatd",
+    )
+
+    parser.add_option("-p","--pid-file",
+        action="store",
+        dest="pidfile",
+        help="specify alternate path for pidfile",
+        default="/var/run/varnishstatd.pid",
+    )
+
+    parser.add_option("-u","--user",
+        action="store",
+        dest="user",
+        help="specify alternate user (default: varnish)",
+        default="varnish",
+    )
+
+    parser.add_option("-g","--group",
+        action="store",
+        dest="group",
+        help="specify alternate user (default: varnish)",
+        default="varnish",
+    )
+
+    parser.add_option("-P", "--port",
+        action="store",
+        dest="port",
+        help="set HTTP port",
+        default=8888,
+    )
+    (options,args) = parser.parse_args()
+
+    (_uid,_gid) = (0,0)
+
+    if os.getuid() != 0:
+        _uid=os.getuid()
+        _gid=os.getgid()
+    else:
+        _uid=pwd.getpwnam(options.user)
+        _gid=grp.getgrnam(options.group)
+
+
+    pid=read_pidfile(options.pidfile)
+    isrunning=running(pid)
+
+    if not isrunning:
+        try:
+            os.unlink(options.pidfile)
+        except:
+            pass
+
+    exit=0
+
+    if len(args) != 1:
+        parser.error("please call with start|stop|restart")
+
+    elif args[0] == "start" and not isrunning:
+        with daemon.DaemonContext(pidfile=daemon.pidfile.PIDLockFile(options.pidfile), uid=_uid, gid=_gid, ):
+            varnishstatd.main(options)
+
+    elif args[0] == "stop" and isrunning:
+        os.kill(pid,15)
+        os.kill(pid,9)
+
+    elif args[0] == "status":
+        print "%s" % isrunning
+        if not isrunning:
+            exit=-1
+
+
+    sys.exit(exit)

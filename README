@@ -1,0 +1,2 @@
+The daemon (bin/varnishstatd) exports varnishstat calculates and exports stats from varnishstat.
+The nagios script (bin/check_varnishstat.pl) querys the varnishstatd and alerts if a threshold is exceeded.
