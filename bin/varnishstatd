@@ -1,12 +1,12 @@
 #!/usr/bin/env python26
 
+import sys, os, pwd, grp
 import site
-site.addsitedir("/home/dev/src/varnishstats-daemon/lib")
+site.addsitedir("%s/lib" % os.path.dirname(os.path.abspath(__file__+"/../")) )
 
 import daemon, daemon.pidfile
 from varnishstats import varnishstatd
 import optparse
-import sys, os, pwd, grp
 
 
 def read_pidfile(pidfile):
